@@ -19,15 +19,15 @@
 using namespace std;
 
 //从数字初始化
-void BigInt::TransferFromNumber(long long num)
+BigInt::BigInt(long long num)
 {
-    sign = 1;
     if(0 == num) 
     {
-        is_zero = true;
+        BigInt();
     }
     else
     {
+        sign = 1;
         is_zero = false;
         bool out_of_range = false;
         if (num<0) //小于0，取负
@@ -55,7 +55,7 @@ void BigInt::TransferFromNumber(long long num)
 }
 
 //分析字符串，转换成大整数
-void BigInt::TransferFromString(const string& str)
+void BigInt::FromString(const string& str)
 {
     sign = 1;
     if (str.empty())
@@ -103,47 +103,185 @@ void BigInt::TransferFromString(const string& str)
 //赋值
 BigInt& BigInt::operator=(const BigInt &bi)
 {
-    this->data = bi.data;
-    this->is_zero = bi.is_zero;
-    this->sign = bi.sign;
+    if(*this != bi)
+    {
+        this->data = bi.data;
+        this->is_zero = bi.is_zero;
+        this->sign = bi.sign;
+    }
     return *this;
 }
 
 //加等
 BigInt& BigInt::operator+=(const BigInt &rhs)
 {
-    *this = *this + rhs;
-    return *this;
+    if(rhs.is_zero)//lhs+0
+    {
+        return *this; 
+    }
+	
+	if(this->is_zero) //0+rhs
+    {
+        *this = rhs;
+    }
+    else if(this->sign!=rhs.sign)//异号转减法
+    {
+		if (this->sign > 0)
+		{
+			*this -= -rhs; //正+负
+		}
+		else
+		{
+			this->Neg();   //负+正
+			*this = rhs - *this;
+		}
+    }
+    else//同号加法
+    {
+        this->Add(rhs, 0);
+    }
+    
+    return *this; 
+}
+
+//带偏移的正数加法
+BigInt& BigInt::Add(const BigInt &rhs, const unsigned int pos)
+{
+    auto max_size = (this->data.size()>rhs.data.size()+pos)? 
+                            this->data.size():rhs.data.size()+pos;
+	unsigned int carry = 0;
+    for(unsigned int i=pos,j=0;i<max_size;i++,j++)
+    {
+        auto lnum = (i<this->data.size())? this->data[i]:0;
+        auto rnum = (j<rhs.data.size())? rhs.data[j]:0;
+        auto sum = lnum + rnum + carry;
+        carry = sum / 10;
+        if(i<this->data.size())
+        {
+            this->data[i] = sum % 10;
+        }
+        else
+        {
+            this->data.push_back(sum % 10);
+        }
+    }
+    if(carry)
+    {
+        this->data.push_back(carry);
+    }
+
+	return *this;
 }
 
 //减等
 BigInt& BigInt::operator-=(const BigInt &rhs)
 {
-    *this = *this - rhs;
+	if (this->is_zero)//0-?
+	{
+		*this = -rhs;
+		return *this;
+	}
+
+	if (rhs.is_zero)//?-0
+	{
+		return *this;
+	}
+
+	if (this->sign != rhs.sign)//异号
+	{
+		if (this->sign > 0)//正-负 转加法
+		{
+			*this += -rhs;
+			return *this;
+		}
+		else        //负-正 转加法取负
+		{
+			this->Neg();
+			*this += rhs;
+			return this->Neg();
+		}
+	}
+
+	//同号
+	if (*this == rhs) //相等
+	{
+		return (*this = 0);
+	}
+
+	if (this->sign < 0)
+	{
+		//负-负 换位置减法
+		this->Neg();
+		*this -= -rhs;
+		return (*this).Neg();
+	}
+	else if (*this < rhs)//正-正
+	{
+		//小-大 交换被减数与减数 结果取负
+		//避免最高位出现借位的繁琐处理
+		BigInt re_bi(rhs);
+		*this = re_bi.Sub(*this).Neg();
+	}
+	else
+	{
+		this->Sub(rhs); //大-小
+	}
+
+	return *this;
+}
+
+//减法，大-小
+BigInt& BigInt::Sub(const BigInt &rhs)
+{
+    unsigned int carry = 0; //借位
+	auto it_l = this->data.begin();
+	auto it_r = rhs.data.cbegin();
+    for(;it_l!=this->data.end()||it_r!=rhs.data.cend();++it_l)
+    {
+        auto lnum = *it_l;
+        auto rnum = (it_r!=rhs.data.cend())? *it_r++:0;
+        int tmp_Sub = lnum - rnum - carry; //结果可能是负数，不能用auto
+        if(tmp_Sub<0)
+        {
+            carry = 1;
+            tmp_Sub +=10;
+        }
+        else
+        {
+            carry = 0;
+        }
+        *it_l = tmp_Sub;
+    }
+    this->ClearZeroLeft();
     return *this;
 }
 
 //乘等
 BigInt& BigInt::operator*=(const BigInt &rhs)
 {
-    *this = *this * rhs;
+    *this = this->Mul(rhs);
     return *this;
 }
 
-//取负，返回原数取负的副本
-const BigInt BigInt::operator-(void) const
+//取负
+const BigInt BigInt::operator-(void) const 
 {
-    if (this->is_zero)
-    {
-        return *this;
-    }
-    BigInt re_bi(*this);
-    re_bi.sign *= -1;
-    return re_bi;
+	BigInt re_bi(*this);
+	re_bi.Neg();
+	return re_bi;
+}
+
+BigInt& BigInt::Neg(void)
+{
+    if(!this->is_zero)
+	{
+		this->sign *= -1;;
+	}
+	return *this;
 }
 
 //将大整数转为字符串
-const string BigInt::GetStr(void) const
+const string BigInt::ToString(void) const
 {
     if(is_zero)
     {
@@ -159,104 +297,16 @@ const string BigInt::GetStr(void) const
 //加法
 const BigInt operator+(const BigInt &lhs, const BigInt &rhs)
 {
-    if(lhs.is_zero) //0+？
-    {
-        return rhs;
-    }
-    if(rhs.is_zero) //?+0
-    {
-        return lhs;
-    }
-    
-    if(lhs.sign*rhs.sign<0) //异号转减法
-    {
-        return (lhs.sign>0? lhs-(-rhs):rhs-(-lhs));
-    }
-    
-    //同号加法
-    BigInt re_bi = lhs.Add(rhs, 0);
-    re_bi.sign = lhs.sign;//符号
-    return re_bi;
-}
-
-//带偏移的正数加法
-const BigInt BigInt::Add(const BigInt &rhs, const unsigned int pos) const
-{
-    BigInt re_bi;
-    re_bi.is_zero = false;//结果=0的情况已经在调用此函数前排除
-    auto it_l=this->data.cbegin()+pos;
-    auto it_r=rhs.data.cbegin();
-    std::copy(this->data.cbegin(),it_l,back_inserter(re_bi.data)); //copy偏移的部分
-    
-    unsigned int carry = 0; //进位
-    while(it_l!= this->data.cend()||it_r!=rhs.data.cend())
-    {
-        auto lnum = (it_l!= this->data.cend())? *it_l++:0;
-        auto rnum = (it_r!=rhs.data.cend())? *it_r++:0;
-        auto tmp_add = lnum + rnum + carry;
-        carry = tmp_add / 10;
-        re_bi.data.push_back(tmp_add % 10);
-    }
-    if(carry)
-    {
-        re_bi.data.push_back(carry);
-    }
+	BigInt re_bi(lhs);
+    re_bi += rhs;
     return re_bi;
 }
 
 //减法
 const BigInt operator-(const BigInt &lhs, const BigInt &rhs)
 {
-    if(lhs.is_zero)//0-?
-    {
-        return -rhs;
-    }
-    if(rhs.is_zero)//?-0
-    {
-        return lhs;
-    }
-    
-    if(lhs.sign*rhs.sign<0)//异号
-    {
-        if(lhs.sign>0)//正-负 转加法
-        {
-            return    lhs + (-rhs);
-        }
-        else        //负-正 转加法取负
-        {
-            return -((-lhs) + rhs);
-        }
-    }
-    if(lhs.sign<0) return (-rhs)-(-lhs);//负-负 换位置减法
-
-    //正-正
-    if(lhs<rhs)
-    {
-        //小-大 交换被减数与减数 结果取负
-        //避免最高位出现借位的繁琐处理
-        return -(rhs-lhs);
-    }
-    BigInt re_bi;
-    re_bi.is_zero = false;
-    unsigned int carry = 0; //借位
-    for(auto it_l=lhs.data.cbegin(),it_r=rhs.data.cbegin()
-        ;it_l!=lhs.data.cend()||it_r!=rhs.data.cend();)
-    {
-        auto lnum = (it_l!=lhs.data.cend())? *it_l++:0;
-        auto rnum = (it_r!=rhs.data.cend())? *it_r++:0;
-        int tmp_minus = lnum - rnum - carry; //结果可能是负数，不能用auto
-        if(tmp_minus<0)
-        {
-            carry = 1;
-            tmp_minus +=10;
-        }
-        else
-        {
-            carry = 0;
-        }
-        re_bi.data.push_back(tmp_minus);
-    }
-    re_bi.ClearZeroLeft();
+	BigInt re_bi(lhs);
+    re_bi -= rhs;
     return re_bi;
 }
 
@@ -277,15 +327,22 @@ void BigInt::ClearZeroLeft(void)
 //乘法
 const BigInt operator*(const BigInt &lhs, const BigInt &rhs)
 {
-    if(lhs.is_zero || rhs.is_zero)//任一乘数=0
+    return lhs.Mul(rhs);
+
+}
+BigInt BigInt::Mul(const BigInt &rhs) const
+{    
+    BigInt re_bi;
+    if(this->is_zero || rhs.is_zero)//任一乘数=0
     {
-        return BigInt();
+        return re_bi;
     }
     
+    re_bi.is_zero = false;
     //非0两数相乘
-    const BigInt &min_hs = lhs.data.size()<=rhs.data.size()? lhs:rhs;
-    const BigInt &max_hs = lhs.data.size()<=rhs.data.size()? rhs:lhs;
-    BigInt re_bi;
+    const BigInt &min_hs = this->data.size()<=rhs.data.size()? *this:rhs;
+    const BigInt &max_hs = this->data.size()<=rhs.data.size()? rhs:*this;
+    
     int i = 0;
     for(auto it_min=min_hs.data.cbegin();it_min!=min_hs.data.cend();it_min++,i++)
     {
@@ -308,10 +365,10 @@ const BigInt operator*(const BigInt &lhs, const BigInt &rhs)
             t_bi.data.push_back(carry);
         }
         //将结果累加
-        re_bi = re_bi.Add(t_bi, i);
+        re_bi.Add(t_bi, i);
     }
     //符号
-    re_bi.sign = lhs.sign*rhs.sign;
+    re_bi.sign = this->sign*rhs.sign;
     return re_bi;
 }
 
@@ -320,7 +377,7 @@ std::istream& operator>>(istream& in, BigInt& bi)
 {
     string str;
     in>>str;
-    bi.TransferFromString(str);
+    bi.FromString(str);
     return in;
 }
 
@@ -333,7 +390,7 @@ std::ostream& operator<<(ostream& out, const BigInt& bi)
     }
     else
     {
-        return out << bi.GetStr();
+        return out << bi.ToString();
     }
 }
 
