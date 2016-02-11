@@ -119,22 +119,22 @@ BigInt& BigInt::operator+=(const BigInt &rhs)
     {
         return *this; 
     }
-	
-	if(this->is_zero) //0+rhs
+    
+    if(this->is_zero) //0+rhs
     {
         *this = rhs;
     }
     else if(this->sign!=rhs.sign)//异号转减法
     {
-		if (this->sign > 0)
-		{
-			*this -= -rhs; //正+负
-		}
-		else
-		{
-			this->Neg();   //负+正
-			*this = rhs - *this;
-		}
+        if (this->sign > 0)
+        {
+            *this -= -rhs; //正+负
+        }
+        else
+        {
+            this->Neg();   //负+正
+            *this = rhs - *this;
+        }
     }
     else//同号加法
     {
@@ -149,7 +149,7 @@ BigInt& BigInt::Add(const BigInt &rhs, const unsigned int pos)
 {
     auto max_size = (this->data.size()>rhs.data.size()+pos)? 
                             this->data.size():rhs.data.size()+pos;
-	unsigned int carry = 0;
+    unsigned int carry = 0;
     for(unsigned int i=pos,j=0;i<max_size;i++,j++)
     {
         auto lnum = (i<this->data.size())? this->data[i]:0;
@@ -170,72 +170,72 @@ BigInt& BigInt::Add(const BigInt &rhs, const unsigned int pos)
         this->data.push_back(carry);
     }
 
-	return *this;
+    return *this;
 }
 
 //减等
 BigInt& BigInt::operator-=(const BigInt &rhs)
 {
-	if (this->is_zero)//0-?
-	{
-		*this = -rhs;
-		return *this;
-	}
+    if (this->is_zero)//0-?
+    {
+        *this = -rhs;
+        return *this;
+    }
 
-	if (rhs.is_zero)//?-0
-	{
-		return *this;
-	}
+    if (rhs.is_zero)//?-0
+    {
+        return *this;
+    }
 
-	if (this->sign != rhs.sign)//异号
-	{
-		if (this->sign > 0)//正-负 转加法
-		{
-			*this += -rhs;
-			return *this;
-		}
-		else        //负-正 转加法取负
-		{
-			this->Neg();
-			*this += rhs;
-			return this->Neg();
-		}
-	}
+    if (this->sign != rhs.sign)//异号
+    {
+        if (this->sign > 0)//正-负 转加法
+        {
+            *this += -rhs;
+            return *this;
+        }
+        else        //负-正 转加法取负
+        {
+            this->Neg();
+            *this += rhs;
+            return this->Neg();
+        }
+    }
 
-	//同号
-	if (*this == rhs) //相等
-	{
-		return (*this = 0);
-	}
+    //同号
+    if (*this == rhs) //相等
+    {
+        return (*this = 0);
+    }
 
-	if (this->sign < 0)
-	{
-		//负-负 换位置减法
-		this->Neg();
-		*this -= -rhs;
-		return (*this).Neg();
-	}
-	else if (*this < rhs)//正-正
-	{
-		//小-大 交换被减数与减数 结果取负
-		//避免最高位出现借位的繁琐处理
-		BigInt re_bi(rhs);
-		*this = re_bi.Sub(*this).Neg();
-	}
-	else
-	{
-		this->Sub(rhs); //大-小
-	}
+    if (this->sign < 0)
+    {
+        //负-负 换位置减法
+        this->Neg();
+        *this -= -rhs;
+        return (*this).Neg();
+    }
+    else if (*this < rhs)//正-正
+    {
+        //小-大 交换被减数与减数 结果取负
+        //避免最高位出现借位的繁琐处理
+        BigInt re_bi(rhs);
+        *this = re_bi.Sub(*this).Neg();
+    }
+    else
+    {
+        this->Sub(rhs); //大-小
+    }
 
-	return *this;
+    return *this;
 }
 
 //减法，大-小
 BigInt& BigInt::Sub(const BigInt &rhs)
 {
     unsigned int carry = 0; //借位
-	auto it_l = this->data.begin();
-	auto it_r = rhs.data.cbegin();
+    auto it_l = this->data.begin();
+    auto it_r = rhs.data.cbegin();
     for(;it_l!=this->data.end()||it_r!=rhs.data.cend();++it_l)
     {
         auto lnum = *it_l;
@@ -266,18 +266,18 @@ BigInt& BigInt::operator*=(const BigInt &rhs)
 //取负
 const BigInt BigInt::operator-(void) const 
 {
-	BigInt re_bi(*this);
-	re_bi.Neg();
-	return re_bi;
+    BigInt re_bi(*this);
+    re_bi.Neg();
+    return re_bi;
 }
 
 BigInt& BigInt::Neg(void)
 {
     if(!this->is_zero)
-	{
-		this->sign *= -1;;
-	}
-	return *this;
+    {
+        this->sign *= -1;;
+    }
+    return *this;
 }
 
 //将大整数转为字符串
@@ -297,7 +297,7 @@ const string BigInt::ToString(void) const
 //加法
 const BigInt operator+(const BigInt &lhs, const BigInt &rhs)
 {
-	BigInt re_bi(lhs);
+    BigInt re_bi(lhs);
     re_bi += rhs;
     return re_bi;
 }
@@ -305,7 +305,7 @@ const BigInt operator+(const BigInt &lhs, const BigInt &rhs)
 //减法
 const BigInt operator-(const BigInt &lhs, const BigInt &rhs)
 {
-	BigInt re_bi(lhs);
+    BigInt re_bi(lhs);
     re_bi -= rhs;
     return re_bi;
 }
