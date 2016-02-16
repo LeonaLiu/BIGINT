@@ -29,7 +29,7 @@ int main()
     }
     std::cout << num << "! = " << re_bi << std::endl;
     test();
-	return 0;
+    return 0;
 }
 
  int test(void)
@@ -59,18 +59,18 @@ int main()
     std::cout<<"bi_4_2 : "<<bi_4_2<<std::endl;
     
     std::cout << std::endl <<"3: Get BigInt from standard input" << std::endl;
-	//从标准输入取数
-	BigInt bi_5, bi_6;
-	std::cout << "Plz input 2 number: ";
-	std::cin >> bi_5 >> bi_6;
-	std::cout << "bi_5 : " << bi_5 << std::endl;
-	std::cout << "bi_6 : " << bi_6 << std::endl;
-	//加法
-	std::cout << "bi_5 + bi_6 : " << bi_5 + bi_6 << std::endl;
-	//减法
-	std::cout << "bi_5 - bi_6 : " << bi_5 - bi_6 << std::endl;
-	//乘法
-	std::cout << "bi_5 * bi_6 : " << bi_5*bi_6 << std::endl;
+    //从标准输入取数
+    BigInt bi_5, bi_6;
+    std::cout << "Plz input 2 number: ";
+    std::cin >> bi_5 >> bi_6;
+    std::cout << "bi_5 : " << bi_5 << std::endl;
+    std::cout << "bi_6 : " << bi_6 << std::endl;
+    //加法
+    std::cout << "bi_5 + bi_6 : " << bi_5 + bi_6 << std::endl;
+    //减法
+    std::cout << "bi_5 - bi_6 : " << bi_5 - bi_6 << std::endl;
+    //乘法
+    std::cout << "bi_5 * bi_6 : " << bi_5*bi_6 << std::endl;
 
     std::cout << std::endl <<"4: Comparison operations" << std::endl;
     //比较运算
