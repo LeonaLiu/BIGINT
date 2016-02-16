@@ -12,6 +12,8 @@
 #include <vector>
 #include "BigInt.h"
 
+using BIGINT::BigInt;
+
 int test(void);
 
 int main()
